@@ -1,71 +1,53 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.sql.SQLException;
 
-public class DepositarForm extends JFrame {
-    private JPasswordField senhaField;
+public class DepositarForm extends BaseForm {
     private JTextField valorField;
-    private JButton confirmarButton, voltarButton;
+    private JButton depositarButton, voltarButton;
 
-    public DepositarForm() {
-        setTitle("Depositar");
-        setSize(400, 200);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+    public DepositarForm(String cpf) {
+        super("Depositar");
 
-        // Layout
-        setLayout(new GridLayout(4, 2));
+        setLayout(new GridLayout(3, 2));
 
-        // Rótulos
-        JLabel senhaLabel = new JLabel("Senha:");
-        JLabel valorLabel = new JLabel("Valor a Depositar:");
-
-        // Campos de texto
-        senhaField = new JPasswordField();
+        // Campos de entrada
         valorField = new JTextField();
+        depositarButton = new JButton("Depositar");
+        voltarButton = new JButton("Voltar");
 
-        // Botões
-        confirmarButton = new JButton("Confirmar Depósito");
-        voltarButton = new JButton("Voltar para o Menu");
-
-        // Adicionar componentes ao layout
-        add(senhaLabel);
-        add(senhaField);
-        add(valorLabel);
+        add(new JLabel("Valor a Depositar:"));
         add(valorField);
-        add(confirmarButton);
+        add(depositarButton);
         add(voltarButton);
 
-        // Ação do botão Confirmar
-        confirmarButton.addActionListener(e -> {
-            String senha = new String(senhaField.getPassword()).trim();
-            String valorText = valorField.getText().trim();
-
-            if (senha.equals(UserData.getSenha())) {  // Verifica a senha
-                try {
-                    double valor = Double.parseDouble(valorText);
-                    if (valor > 0) {
-                        // Atualiza o saldo de Reais
-                        double novoSaldo = UserData.getSaldoReais() + valor;
-                        UserData.setSaldoReais(novoSaldo);
-
-                        JOptionPane.showMessageDialog(null, "Depósito realizado com sucesso!");
-                        dispose();  // Fecha a tela de depósito
-                        new MenuForm().setVisible(true);  // Volta para o menu
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Valor inválido para depósito.");
-                    }
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Por favor, insira um valor válido.");
+        depositarButton.addActionListener(e -> {
+            try {
+                double valor = Double.parseDouble(valorField.getText().trim());
+                if (valor <= 0) {
+                    JOptionPane.showMessageDialog(this, "O valor deve ser positivo.");
+                    return;
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Senha incorreta.");
+
+                Usuario usuario = Database.obterUsuario(cpf);
+                double saldoReais = usuario.getSaldoReais();
+                Database.atualizarSaldo(cpf, saldoReais + valor, usuario.getSaldoBitcoin(), usuario.getSaldoEthereum(), usuario.getSaldoRipple());
+                JOptionPane.showMessageDialog(this, "Depósito realizado com sucesso!");
+                dispose();
+                MenuForm.getInstance(cpf).setVisible(true);
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Digite um valor válido.");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao atualizar saldo: " + ex.getMessage());
             }
         });
 
-        // Ação do botão Voltar para o Menu
         voltarButton.addActionListener(e -> {
-            dispose();  // Fecha a tela de depósito
-            new MenuForm().setVisible(true);  // Volta para o menu
+            dispose();
+           MenuForm.getInstance(cpf).setVisible(true);
+
         });
     }
 }

@@ -1,41 +1,42 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
 
-public class ConsultarSaldoForm extends JFrame {
-    private JPasswordField senhaField;
+public class ConsultarSaldoForm extends BaseForm {
     private JButton consultarButton, voltarButton;
 
-    public ConsultarSaldoForm(MenuForm menu) {
-        setTitle("Consultar Saldo");
-        setSize(300, 200);
-        setLocationRelativeTo(null);
-        setLayout(new GridLayout(3, 2));
+    public ConsultarSaldoForm(String cpf) {
+        super("Consultar Saldo");
 
-        JLabel senhaLabel = new JLabel("Senha:");
-        senhaField = new JPasswordField();
+        setLayout(new GridLayout(2, 1));
+
         consultarButton = new JButton("Consultar Saldo");
-        voltarButton = new JButton("Voltar para o Menu");
+        voltarButton = new JButton("Voltar");
 
-        add(senhaLabel);
-        add(senhaField);
         add(consultarButton);
         add(voltarButton);
 
-        // Ação do botão Consultar Saldo
         consultarButton.addActionListener(e -> {
-            String senha = new String(senhaField.getPassword()).trim();
-            if (senha.equals(UserData.getSenha())) {
-                JOptionPane.showMessageDialog(this, "Saldo em Reais: R$ " + String.format("%.2f", UserData.getSaldoReais()));
-            } else {
-                JOptionPane.showMessageDialog(this, "Senha incorreta.");
+            try {
+                Usuario usuario = Database.obterUsuario(cpf);
+                JOptionPane.showMessageDialog(this, "Saldo em Reais: R$ " + usuario.getSaldoReais()
+                        + "\nSaldo em Bitcoin: " + usuario.getSaldoBitcoin()
+                        + "\nSaldo em Ethereum: " + usuario.getSaldoEthereum()
+                        + "\nSaldo em Ripple: " + usuario.getSaldoRipple());
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao consultar saldo: " + ex.getMessage());
             }
         });
 
-        // Ação do botão Voltar
         voltarButton.addActionListener(e -> {
-            setVisible(false);
-            menu.setVisible(true);
+            dispose();
+            MenuForm.getInstance(cpf).setVisible(true);
+
         });
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ConsultarSaldoForm("12345678901").setVisible(true));
     }
 }

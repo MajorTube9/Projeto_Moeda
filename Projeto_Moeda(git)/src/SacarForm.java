@@ -1,71 +1,58 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.sql.SQLException;
 
-public class SacarForm extends JFrame {
-    private JPasswordField senhaField;
+public class SacarForm extends BaseForm {
     private JTextField valorField;
-    private JButton confirmarButton, voltarButton;
+    private JButton sacarButton, voltarButton;
 
-    public SacarForm() {
-        setTitle("Sacar");
-        setSize(400, 200);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+    public SacarForm(String cpf) {
+        super("Sacar");
 
-        // Layout
-        setLayout(new GridLayout(4, 2));
+        setLayout(new GridLayout(3, 2));
 
-        // Rótulos
-        JLabel senhaLabel = new JLabel("Senha:");
-        JLabel valorLabel = new JLabel("Valor a Sacar:");
-
-        // Campos de texto
-        senhaField = new JPasswordField();
+        // Campos de entrada
         valorField = new JTextField();
+        sacarButton = new JButton("Sacar");
+        voltarButton = new JButton("Voltar");
 
-        // Botões
-        confirmarButton = new JButton("Confirmar Saque");
-        voltarButton = new JButton("Voltar para o Menu");
-
-        // Adicionar componentes ao layout
-        add(senhaLabel);
-        add(senhaField);
-        add(valorLabel);
+        add(new JLabel("Valor a Sacar:"));
         add(valorField);
-        add(confirmarButton);
+        add(sacarButton);
         add(voltarButton);
 
-        // Ação do botão Confirmar
-        confirmarButton.addActionListener(e -> {
-            String senha = new String(senhaField.getPassword()).trim();
-            String valorText = valorField.getText().trim();
-
-            if (senha.equals(UserData.getSenha())) {  // Verifica a senha
-                try {
-                    double valor = Double.parseDouble(valorText);
-                    if (valor > 0 && valor <= UserData.getSaldoReais()) {
-                        // Atualiza o saldo de Reais
-                        double novoSaldo = UserData.getSaldoReais() - valor;
-                        UserData.setSaldoReais(novoSaldo);
-
-                        JOptionPane.showMessageDialog(null, "Saque realizado com sucesso!");
-                        dispose();  // Fecha a tela de saque
-                        new MenuForm().setVisible(true);  // Volta para o menu
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Valor inválido para saque ou saldo insuficiente.");
-                    }
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Por favor, insira um valor válido.");
+        sacarButton.addActionListener(e -> {
+            try {
+                double valor = Double.parseDouble(valorField.getText().trim());
+                if (valor <= 0) {
+                    JOptionPane.showMessageDialog(this, "O valor deve ser positivo.");
+                    return;
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Senha incorreta.");
+
+                Usuario usuario = Database.obterUsuario(cpf);
+                double saldoReais = usuario.getSaldoReais();
+
+                if (saldoReais >= valor) {
+                    Database.atualizarSaldo(cpf, saldoReais - valor, usuario.getSaldoBitcoin(), usuario.getSaldoEthereum(), usuario.getSaldoRipple());
+                    JOptionPane.showMessageDialog(this, "Saque realizado com sucesso!");
+                    dispose();
+                    MenuForm.getInstance(cpf).setVisible(true);
+
+                } else {
+                    JOptionPane.showMessageDialog(this, "Saldo insuficiente para o saque.");
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Digite um valor válido.");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao atualizar saldo: " + ex.getMessage());
             }
         });
 
-        // Ação do botão Voltar para o Menu
         voltarButton.addActionListener(e -> {
-            dispose();  // Fecha a tela de saque
-            new MenuForm().setVisible(true);  // Volta para o menu
+            dispose();
+            MenuForm.getInstance(cpf).setVisible(true);
+
         });
     }
 }

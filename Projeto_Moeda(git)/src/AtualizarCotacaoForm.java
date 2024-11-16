@@ -1,42 +1,30 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Random;
 
-public class AtualizarCotacaoForm extends JFrame {
+public class AtualizarCotacaoForm extends BaseForm {
     private JButton atualizarButton, voltarButton;
 
-    public AtualizarCotacaoForm(MenuForm menu) {
-        setTitle("Atualizar Cotação");
-        setSize(300, 200);
-        setLocationRelativeTo(null);
-        setLayout(new GridLayout(3, 1));
-        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    public AtualizarCotacaoForm() {
+        super("Atualizar Cotações");
 
-        JLabel infoLabel = new JLabel("Clique para atualizar cotações:", SwingConstants.CENTER);
-        add(infoLabel);
+        setLayout(new GridLayout(3, 1));
 
         atualizarButton = new JButton("Atualizar Cotações");
-        add(atualizarButton);
+        voltarButton = new JButton("Voltar");
 
-        voltarButton = new JButton("Voltar para o Menu");
+        add(atualizarButton);
         add(voltarButton);
 
+        // Ação para atualizar as cotações
         atualizarButton.addActionListener(e -> {
-            atualizarCotacoes();
-            JOptionPane.showMessageDialog(this, "Cotações atualizadas com sucesso!");
+            UserData.atualizarCotacao();
+            JOptionPane.showMessageDialog(this, "Cotações atualizadas com sucesso!\n"
+                    + "Bitcoin: R$ " + String.format("%.2f", UserData.getCotacaoBitcoin()) + "\n"
+                    + "Ethereum: R$ " + String.format("%.2f", UserData.getCotacaoEthereum()) + "\n"
+                    + "Ripple: R$ " + String.format("%.2f", UserData.getCotacaoRipple()));
         });
 
-        voltarButton.addActionListener(e -> {
-            setVisible(false);
-            menu.setVisible(true);
-        });
-    }
-
-    private void atualizarCotacoes() {
-        Random random = new Random();
-        UserData.setCotacaoBitcoin(UserData.getCotacaoBitcoin() * (1 + (random.nextDouble() * 0.1 - 0.05)));
-        UserData.setCotacaoEthereum(UserData.getCotacaoEthereum() * (1 + (random.nextDouble() * 0.1 - 0.05)));
-        UserData.setCotacaoRipple(UserData.getCotacaoRipple() * (1 + (random.nextDouble() * 0.1 - 0.05)));
+        voltarButton.addActionListener(e -> dispose());
     }
 }

@@ -1,78 +1,68 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
 
-public class CadastroForm extends JFrame {
-    private JTextField nomeField, sobrenomeField, cpfField;
-    private JPasswordField senhaField;
-    private JButton cadastrarButton;
+public class CadastroForm extends BaseForm {
+    private JTextField nomeField, sobrenomeField, cpfField, senhaField;
+    private JButton cadastrarButton, voltarButton;
 
     public CadastroForm() {
-        setTitle("Tela de Cadastro");
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        super("Cadastro");
 
-        // Layout
         setLayout(new GridLayout(5, 2));
 
-        // Rótulos
-        JLabel nomeLabel = new JLabel("Nome:");
-        JLabel sobrenomeLabel = new JLabel("Sobrenome:");
-        JLabel cpfLabel = new JLabel("CPF:");
-        JLabel senhaLabel = new JLabel("Senha:");
-
-        // Campos de texto
+        // Campos de entrada
         nomeField = new JTextField();
         sobrenomeField = new JTextField();
         cpfField = new JTextField();
         senhaField = new JPasswordField();
 
-        // Botão de cadastrar
+        // Botões
         cadastrarButton = new JButton("Cadastrar");
+        voltarButton = new JButton("Voltar");
 
-        // Adicionar componentes ao layout
-        add(nomeLabel);
+        add(new JLabel("Nome:"));
         add(nomeField);
-        add(sobrenomeLabel);
+        add(new JLabel("Sobrenome:"));
         add(sobrenomeField);
-        add(cpfLabel);
+        add(new JLabel("CPF:"));
         add(cpfField);
-        add(senhaLabel);
+        add(new JLabel("Senha:"));
         add(senhaField);
         add(cadastrarButton);
+        add(voltarButton);
 
-        // Ação do botão Cadastrar
-        cadastrarButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String nome = nomeField.getText().trim();
-                String sobrenome = sobrenomeField.getText().trim();
-                String cpf = cpfField.getText().trim();
-                String senha = new String(senhaField.getPassword()).trim();
+        // Ação para cadastrar
+        cadastrarButton.addActionListener(e -> {
+            String nome = nomeField.getText().trim();
+            String sobrenome = sobrenomeField.getText().trim();
+            String cpf = cpfField.getText().trim();
+            String senha = senhaField.getText().trim();
 
-                // Verifica se o CPF e a senha têm o formato correto
-                if (cpf.length() == 11 && senha.length() == 6) {
-                    // Armazena os dados do usuário na classe UserData
-                    UserData.setNome(nome);
-                    UserData.setSobrenome(sobrenome);
-                    UserData.setCpf(cpf);
-                    UserData.setSenha(senha);
-
-                    JOptionPane.showMessageDialog(null, "Cadastro realizado com sucesso!");
-                    dispose(); // Fecha a tela de cadastro
-                    new LoginForm().setVisible(true); // Volta para a tela de login
-                } else {
-                    JOptionPane.showMessageDialog(null, "CPF deve ter 11 dígitos e senha deve ter 6 dígitos.");
-                }
+            if (nome.isEmpty() || sobrenome.isEmpty() || cpf.isEmpty() || senha.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos.");
+                return;
             }
+
+            try {
+                Database.criarUsuario(nome, sobrenome, cpf, senha);
+                JOptionPane.showMessageDialog(this, "Usuário cadastrado com sucesso!");
+                dispose();
+                new LoginForm().setVisible(true);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao cadastrar: " + ex.getMessage());
+            }
+        });
+
+        // Ação para voltar ao login
+        voltarButton.addActionListener(e -> {
+            dispose();
+            new LoginForm().setVisible(true);
         });
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new CadastroForm().setVisible(true);
-            }
-        });
+        SwingUtilities.invokeLater(() -> new CadastroForm().setVisible(true));
     }
 }
